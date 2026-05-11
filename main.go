@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"strings"
@@ -23,7 +24,6 @@ func main() {
 			fmt.Println("Error accepting connecton: ", err)
 			return
 		}
-		defer conn.Close()
 
 		go handleConnection(conn)
 	}
@@ -32,55 +32,79 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	fmt.Println("Client connected!")
+	reader := bufio.NewReader(conn)
 
-	buffer := make([]byte, 1024)
+	requestLine, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Error reading request line: ", err)
+		return
+	}
+	requestLine = strings.TrimSpace(requestLine)
+
+	headers := make(map[string]string)
 
 	for {
-		n, err := conn.Read(buffer)
+		line, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Client disconnected")
+			fmt.Printf("Error reading headers: %s", err)
 			return
 		}
 
-		input := strings.TrimSpace(string(buffer[:n]))
-		
-		parts := strings.Split(input, " ")
+		line = strings.TrimSpace(line)
 
+		if line == "" {
+			break
+		}
+
+		parts := strings.SplitN(line, ":", 2)
 		if len(parts) != 2 {
-    	conn.Write([]byte("bad request format\n"))
-    	continue
+			continue
 		}
 
-		method := parts[0]
-		path := parts[1]
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
 
-		fmt.Printf("Method: %s, Path: %s\n", method, path)
+		headers[key] = value
+	}
 
-		var response string
+	fmt.Println("Headers:", headers)
 
-		if method != "GET" {
-			response = "only GET supported\n"
-		} else {
-			switch path {
-			case "/ping":
-				response = "PONG\n"
-			case "hello":
-				response = "hello human 👋\n"
-			default:
-				response = "unknown command\n"
-			}
-		}
+	parts := strings.Split(requestLine, " ")
 
-		_, err = conn.Write([]byte(response)) 
-		if err != nil {
-			fmt.Println("Error writing back to client: ", err)
+	if len(parts) < 3 {
+			fmt.Println("bad request")
 			return
-		}
+	}
+
+	method := parts[0]
+	path := parts[1]
+
+
+	if method != "GET" {
+			writeResponse(conn, "405 Method Not Allowed", "only GET supported")
+			return
+	}
+
+	switch path {
+	case "/ping":
+			writeResponse(conn, "200 OK", "pong")
+	case "/hello":
+			writeResponse(conn, "200 OK", "hello from server 👋")
+	default:
+			writeResponse(conn, "404 Not Found", "not found")
 	}
 }
 
-func trim(s string) string {
-    // remove \n and \r from nc input
-    return strings.TrimSpace(s)
+func writeResponse(conn net.Conn, status string, body string) {
+  response :=
+      "HTTP/1.1 " + status + "\r\n" +
+          "Content-Type: text/plain\r\n" +
+          "Content-Length: " + fmt.Sprint(len(body)) + "\r\n" +
+          "\r\n" +
+          body
+
+  _, err := conn.Write([]byte(response))
+	if err != nil {
+		fmt.Printf("Error writing to conn: %v", err)
+	}
 }
