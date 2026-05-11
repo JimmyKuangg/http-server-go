@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
 func main() {
@@ -42,7 +43,44 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		message := string(buffer[:n])
-		fmt.Println("Received: ", message)
+		input := strings.TrimSpace(string(buffer[:n]))
+		
+		parts := strings.Split(input, " ")
+
+		if len(parts) != 2 {
+    	conn.Write([]byte("bad request format\n"))
+    	continue
+		}
+
+		method := parts[0]
+		path := parts[1]
+
+		fmt.Printf("Method: %s, Path: %s\n", method, path)
+
+		var response string
+
+		if method != "GET" {
+			response = "only GET supported\n"
+		} else {
+			switch path {
+			case "/ping":
+				response = "PONG\n"
+			case "hello":
+				response = "hello human 👋\n"
+			default:
+				response = "unknown command\n"
+			}
+		}
+
+		_, err = conn.Write([]byte(response)) 
+		if err != nil {
+			fmt.Println("Error writing back to client: ", err)
+			return
+		}
 	}
+}
+
+func trim(s string) string {
+    // remove \n and \r from nc input
+    return strings.TrimSpace(s)
 }
