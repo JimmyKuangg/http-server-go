@@ -13,18 +13,12 @@ func main() {
 		fmt.Println("Error starting server: ", err)
 		return
 	}
-
+	
 	fmt.Println("Listening on :8080")
 
 	router := NewRouter()
 
-	router.GET("/ping", func(req *Request) string {
-		return string(req.Body)
-	})
-
-	router.GET("/hello", func(req *Request) string {
-		return "hello from server 👋"
-	})
+	addRoutes(router)
 
 	for {
 		conn, err := listener.Accept()
@@ -39,7 +33,6 @@ func main() {
 
 func handleConnection(conn net.Conn, router *Router) {
 	defer conn.Close()
-
 
 	req, err := parseRequest(conn)
 	if err != nil {
