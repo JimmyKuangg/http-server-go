@@ -1,6 +1,6 @@
 package main
 
-type HandlerFunc func(req *Request) string
+type HandlerFunc func(req *Request) Response
 
 type Router struct {
 	routes map[string]map[string]HandlerFunc
@@ -28,12 +28,15 @@ func (r *Router) POST(path string, handler HandlerFunc) {
 	r.addRoute("POST", path, handler)
 }
 
-func (r *Router) Handle(req *Request) string {
+func (r *Router) Handle(req *Request) Response {
 	if r.routes[req.Method] != nil {
 		if handler, ok := r.routes[req.Method][req.Path]; ok {
 			return handler(req)
 		}
 	}
 
-	return "404 Not Found"
+	return Response{
+		Status: 404,
+		Body: "Not Found",
+	}
 }

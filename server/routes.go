@@ -1,15 +1,24 @@
 package main
 
 func addRoutes(router *Router) {
-	router.GET("/ping", func(req *Request) string {
-		return string(req.Body)
+	router.GET("/ping", func(req *Request) Response {
+		return Response {
+			Status: 200,
+			Body: "pong",
+		}
 	})
 
-	router.GET("/hello", func(req *Request) string {
-		return "hello from server 👋"
+	router.GET("/hello", func(req *Request) Response {
+		return Response {
+			Status: 200,
+			Body: "hello from server 👋",
+		}
 	})
 
-	router.POST("/echo", func(req *Request) string {
-		return string(req.Body)
+	router.POST("/echo", func(req *Request) Response {
+		return Response {
+			Status: 200,
+			Body: string(req.Body),
+		}
 	})
 }

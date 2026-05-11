@@ -13,7 +13,7 @@ func main() {
 		fmt.Println("Error starting server: ", err)
 		return
 	}
-	
+
 	fmt.Println("Listening on :8080")
 
 	router := NewRouter()
@@ -42,5 +42,5 @@ func handleConnection(conn net.Conn, router *Router) {
 
 	responseBody := router.Handle(req)
 
-	writeResponse(conn, "200 OK", responseBody)
+	writeResponse(conn, responseBody)
 }
