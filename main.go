@@ -21,6 +21,7 @@ func main() {
 		fmt.Println("Error accepting connecton: ", err)
 		return
 	}
+	defer conn.Close()
 
 	fmt.Println("Client connected!")
 
