@@ -16,23 +16,33 @@ func main() {
 
 	fmt.Println("Listening on :8080")
 
-	conn, err := listener.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connecton: ", err)
-		return
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connecton: ", err)
+			return
+		}
+		defer conn.Close()
+
+		go handleConnection(conn)
 	}
+}
+
+func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	fmt.Println("Client connected!")
 
 	buffer := make([]byte, 1024)
 
-	n, err := conn.Read(buffer)
-	if err != nil {
-		fmt.Println("Error reading from buffer: ", err)
-		return
-	}
+	for {
+		n, err := conn.Read(buffer)
+		if err != nil {
+			fmt.Println("Client disconnected")
+			return
+		}
 
-	fmt.Println("Received bytes:")
-	fmt.Println(string(buffer[:n]))
+		message := string(buffer[:n])
+		fmt.Println("Received: ", message)
+	}
 }
